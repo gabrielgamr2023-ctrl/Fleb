@@ -1,0 +1,151 @@
+<!DOCTYPE html><html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flappy Online - 6 Fases</title>
+  <style>
+    body {
+      margin: 0;
+      background: #e0f2fe;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }h1 { margin-bottom: 5px; }
+
+canvas {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: white;
+  font-weight: bold;
+}
+
+  </style>
+</head>
+<body>
+  <h1>Flappy Online — 6 Fases</h1>
+  <p id="info">Fase: 1 | Pontos: 0</p>
+  <canvas id="game" width="400" height="500"></canvas>
+  <button onclick="startGame()">Começar</button>  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const info = document.getElementById('info');
+
+    let started = false;
+    let gameOver = false;
+    let level = 1;
+    let score = 0;
+
+    const bird = { x: 80, y: 200, velocity: 0 };
+    let pipes = [];
+
+    const gravity = 0.5;
+    const jump = -8;
+
+    function resetLevel() {
+      bird.y = 200;
+      bird.velocity = 0;
+      pipes = [];
+      score = 0;
+      gameOver = false;
+      updateInfo();
+    }
+
+    function nextLevel() {
+      if (level < 6) {
+        level++;
+        resetLevel();
+      } else {
+        alert('Você zerou o jogo!');
+        level = 1;
+        resetLevel();
+      }
+    }
+
+    function spawnPipe() {
+      const gap = 120 - level * 10;
+      const top = Math.random() * (canvas.height - gap - 100) + 20;
+      pipes.push({ x: canvas.width, top, gap, passed: false });
+    }
+
+    function updateInfo() {
+      info.innerText = `Fase: ${level} | Pontos: ${score}`;
+    }
+
+    function startGame() {
+      started = true;
+    }
+
+    function jumpAction() {
+      if (!started) started = true;
+      bird.velocity = jump;
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space') jumpAction();
+    });
+
+    document.addEventListener('click', jumpAction);
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (started && !gameOver) {
+        bird.velocity += gravity;
+        bird.y += bird.velocity;
+
+        if (Math.random() < 0.02 + level * 0.005) spawnPipe();
+
+        ctx.fillStyle = 'yellow';
+        ctx.fillRect(bird.x, bird.y, 20, 20);
+
+        pipes.forEach(pipe => {
+          pipe.x -= 2 + level;
+
+          ctx.fillStyle = 'green';
+          ctx.fillRect(pipe.x, 0, 40, pipe.top);
+          ctx.fillRect(pipe.x, pipe.top + pipe.gap, 40, canvas.height);
+
+          if (
+            bird.x < pipe.x + 40 &&
+            bird.x + 20 > pipe.x &&
+            (bird.y < pipe.top || bird.y + 20 > pipe.top + pipe.gap)
+          ) gameOver = true;
+
+          if (!pipe.passed && pipe.x < bird.x) {
+            pipe.passed = true;
+            score++;
+            updateInfo();
+          }
+        });
+
+        pipes = pipes.filter(p => p.x > -50);
+
+        if (bird.y > canvas.height || bird.y < 0) gameOver = true;
+
+        if (score >= 10) nextLevel();
+      }
+
+      if (gameOver) {
+        ctx.fillStyle = 'red';
+        ctx.font = '30px Arial';
+        ctx.fillText('Game Over', 120, 250);
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script></body>
+</html>
